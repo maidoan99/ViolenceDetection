@@ -1,0 +1,145 @@
+{% extends "index.html" %}
+
+{% block head %}
+	<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<!-- ======= Intro Section ======= -->
+  <section id="intro" style="padding-top: 70px">
+    <div class="container-fluid" data-aos="zoom-in" data-aos-delay="100">
+      <div class="section-header" style="padding-top: 30px">
+<!--          <h2>Predict Result</h2>-->
+          <p>Stream video and follow predict result real-time</p>
+        </div>
+		<div class="row row justify-content-md-center">
+			<div class="col-5">
+			   <video id="video" autoplay="true" width="97%" controls="controls" ></video>
+			</div>
+			<div class="col-7">
+				<div class="card" style="">
+					<div class="card-body" >
+						<canvas id="canvas"></canvas>
+					</div>
+				</div>
+			</div>
+		</div>
+    </div>
+  </section><!-- End Intro Section -->
+
+<main id="main">
+<!--<section id="predict">-->
+<!--	<div class="container-fluid" data-aos="fade-up">-->
+<!--		<div class="section-header">-->
+<!--          <h2>Predict Result</h2>-->
+<!--          <p>Stream video and follow predict result real-time</p>-->
+<!--        </div>-->
+<!--		<div class="row">-->
+<!--			<div class="col-5">-->
+<!--			   <video id="video" autoplay="true" width="100%" controls="controls"></video>-->
+<!--			</div>-->
+<!--			<div class="col-7">-->
+<!--				<div class="card">-->
+<!--					<div class="card-body">-->
+<!--						<canvas id="canvas"></canvas>-->
+<!--					</div>-->
+<!--				</div>-->
+<!--			</div>-->
+<!--		</div>-->
+<!--	</div>-->
+<!--</section>-->
+</main><!-- End #main -->
+{% endblock %}
+
+  {% block style %}
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
+	<script>
+		$(document).ready(function () {
+			const config = {
+				type: 'line',
+				data: {
+					labels: [],
+					datasets: [{
+						label: "Predict Result",
+						backgroundColor: 'rgb(255, 99, 132)',
+						borderColor: 'rgb(255, 99, 132)',
+						data: [],
+						fill: false,
+					}],
+				},
+				options: {
+					responsive: true,
+					title: {
+						display: true,
+						text: 'Violence Detection'
+					},
+					tooltips: {
+						mode: 'index',
+						intersect: false,
+					},
+					hover: {
+						mode: 'nearest',
+						intersect: true
+					},
+					scales: {
+						xAxes: [{
+							display: true,
+							scaleLabel: {
+								display: true,
+								labelString: 'Time'
+							}
+						}],
+						yAxes: [{
+							display: true,
+							scaleLabel: {
+								display: true,
+								labelString: 'Result'
+							}
+						}]
+					}
+				}
+			};
+
+			const context = document.getElementById('canvas').getContext('2d');
+
+			const lineChart = new Chart(context, config);
+
+			const source = new EventSource("/predict");
+
+			source.onmessage = function (event) {
+				console.log("get data")
+				const data = JSON.parse(event.data);
+				if (config.data.labels.length === 20) {
+					config.data.labels.shift();
+					config.data.datasets[0].data.shift();
+				}
+				config.data.labels.push(data.time);
+				config.data.datasets[0].data.push(data.value);
+				lineChart.update();
+			}
+		});
+
+		if (Hls.isSupported()) {
+		  var video = document.getElementById('video');
+		  var hls = new Hls();
+		  hls.attachMedia(video);
+		  hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+			console.log("video and hls.js are now bound together !");
+			hls.loadSource("static/vid/mystream.m3u8");
+			hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+			  console.log("manifest loaded, found " + data + " quality level");
+			});
+		  });
+		}
+
+		if (!!window.EventSource) {
+		  var source = new EventSource('/');
+		  source.onmessage = function(e) {
+			$("#data").text(e.data);
+		  }
+		}
+	</script>
+{% endblock %}
+  </body>
+</html>

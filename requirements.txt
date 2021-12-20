@@ -1,0 +1,15 @@
+ffmpeg-python
+gevent
+google-cloud-speech
+graphviz
+ipywidgets
+jupyter
+matplotlib
+Pillow
+tqdm
+keras
+flask
+flask-cors
+flask-mail
+numpy
+opencv-python
